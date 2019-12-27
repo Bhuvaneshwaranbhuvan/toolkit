@@ -65,7 +65,7 @@ export function ensureAbsoluteRoot(root: string, itemPath: string): string {
 
       // Drive letter matches cwd? Expand to cwd
       if (itemPath[0].toUpperCase() === cwd[0].toUpperCase()) {
-        if (cwd.endsWith('\\')) {
+        if (!cwd.endsWith('\\')) {
           cwd += '\\'
         }
 
