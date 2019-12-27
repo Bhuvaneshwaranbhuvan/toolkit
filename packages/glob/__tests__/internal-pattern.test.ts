@@ -190,35 +190,29 @@ describe('pattern', () => {
 
       // Pattern is 'C:'
       let pattern = new Pattern(currentDrive)
-      expect(pattern.match(process.cwd())).toBe(MatchKind.All)
-      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBe(
-        MatchKind.None
-      )
+      expect(pattern.match(process.cwd())).toBeTruthy()
+      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBeFalsy()
 
       // Pattern is 'C:foo'
       pattern = new Pattern(`${currentDrive}foo`)
-      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBe(MatchKind.All)
-      expect(pattern.match(path.join(process.cwd(), 'bar'))).toBe(
-        MatchKind.None
-      )
-      expect(pattern.match(`${currentDrive}\\foo`)).toBe(MatchKind.All)
+      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBeTruthy()
+      expect(pattern.match(path.join(process.cwd(), 'bar'))).toBeFalsy()
+      expect(pattern.match(`${currentDrive}\\foo`)).toBeFalsy()
 
       // Pattern is 'X:'
       pattern = new Pattern(otherDrive)
-      expect(pattern.match(`${otherDrive}\\`)).toBe(MatchKind.All)
-      expect(pattern.match(`${otherDrive}\\foo`)).toBe(MatchKind.None)
+      expect(pattern.match(`${otherDrive}\\`)).toBeTruthy()
+      expect(pattern.match(`${otherDrive}\\foo`)).toBeFalsy()
 
       // Pattern is 'X:foo'
       pattern = new Pattern(`${otherDrive}foo`)
-      expect(pattern.match(`${otherDrive}\\foo`)).toBe(MatchKind.All)
-      expect(pattern.match(`${otherDrive}\\bar`)).toBe(MatchKind.None)
+      expect(pattern.match(`${otherDrive}\\foo`)).toBeTruthy()
+      expect(pattern.match(`${otherDrive}\\bar`)).toBeFalsy()
 
       // Pattern is '\\path\\to\\cwd'
       pattern = new Pattern(`${process.cwd().substr(2)}\\foo`)
-      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBe(MatchKind.All)
-      expect(pattern.match(path.join(process.cwd(), 'bar'))).toBe(
-        MatchKind.None
-      )
+      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBeTruthy()
+      expect(pattern.match(path.join(process.cwd(), 'bar'))).toBeFalsy()
     }
   })
 
@@ -255,6 +249,9 @@ describe('pattern', () => {
     expect(new Pattern(' \\foo\\** ').trailingSeparator).toBeFalsy()
     expect(new Pattern(' foo/ ').trailingSeparator).toBeTruthy()
     expect(new Pattern(' /foo/ ').trailingSeparator).toBeTruthy()
+    expect(new Pattern(' C:/foo/ ').trailingSeparator).toBeTruthy()
+    expect(new Pattern(' C:foo/ ').trailingSeparator).toBeTruthy()
+    expect(new Pattern(' D:foo/ ').trailingSeparator).toBeTruthy()
     expect(new Pattern('! /foo/ ').trailingSeparator).toBeTruthy()
     expect(new Pattern(' /foo/*/ ').trailingSeparator).toBeTruthy()
     expect(new Pattern(' /foo/**/ ').trailingSeparator).toBeTruthy()

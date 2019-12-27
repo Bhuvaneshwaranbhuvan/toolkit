@@ -144,7 +144,7 @@ describe('path-helper', () => {
 
       // Already rooted - relative current drive root
       expect(process.cwd().length).toBeGreaterThan(3) // sanity check not drive root
-      assertEnsureAbsoluteRoot(`${otherDrive}\\`, currentDrive, 'C:')
+      assertEnsureAbsoluteRoot(`${otherDrive}\\`, currentDrive, process.cwd())
       assertEnsureAbsoluteRoot(
         `${otherDrive}\\`,
         `${currentDrive}hello`,

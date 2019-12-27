@@ -220,18 +220,19 @@ export class Pattern {
     else if (!pathHelper.hasAbsoluteRoot(pattern)) {
       // Check if has relative root, e.g. C:foo or \foo
       if (pathHelper.hasRoot(pattern)) {
-        const originalSegments = new Path(pattern)
-        const absoluteRootSegments = new Path(
-          pathHelper.ensureAbsoluteRoot(
-            'C:\\dummy-root',
-            originalSegments.segments[0]
-          )
+        const originalRoot = new Path(pattern).segments[0]
+        const absoluteRoot = pathHelper.normalizeSeparators(
+          `${pathHelper.ensureAbsoluteRoot('C:\\dummy-root', originalRoot)}\\`
         )
-        pattern = new Path(
-          absoluteRootSegments.segments
-            .map(x => Pattern.globEscape(x))
-            .concat(originalSegments.segments.slice(1))
-        ).toString()
+        if (originalRoot.match(/^[A-Z]:$/i)) {
+          pattern = absoluteRoot + pattern.substr(2)
+        } else {
+          assert(
+            originalRoot === '\\',
+            `Unexpected root in pattern '${pattern}'`
+          )
+          pattern = absoluteRoot + pattern.substr(1)
+        }
       }
       // Otherwise root using cwd
       else {
