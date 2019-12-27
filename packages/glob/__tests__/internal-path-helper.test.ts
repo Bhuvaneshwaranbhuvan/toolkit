@@ -1,4 +1,3 @@
-import * as path from 'path'
 import * as pathHelper from '../src/internal-path-helper'
 
 const IS_WINDOWS = process.platform === 'win32'
