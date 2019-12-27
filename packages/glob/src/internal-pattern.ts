@@ -221,17 +221,19 @@ export class Pattern {
       // Check if has relative root, e.g. C:foo or \foo
       if (pathHelper.hasRoot(pattern)) {
         const originalRoot = new Path(pattern).segments[0]
-        const absoluteRoot = pathHelper.normalizeSeparators(
-          `${pathHelper.ensureAbsoluteRoot('C:\\dummy-root', originalRoot)}\\`
+        let absoluteRoot = pathHelper.ensureAbsoluteRoot(
+          'C:\\dummy-root',
+          originalRoot
         )
+        absoluteRoot = pathHelper.normalizeSeparators(`${absoluteRoot}\\`)
         if (originalRoot.match(/^[A-Z]:$/i)) {
-          pattern = absoluteRoot + pattern.substr(2)
+          pattern = Pattern.globEscape(absoluteRoot) + pattern.substr(2)
         } else {
           assert(
             originalRoot === '\\',
             `Unexpected root in pattern '${pattern}'`
           )
-          pattern = absoluteRoot + pattern.substr(1)
+          pattern = Pattern.globEscape(absoluteRoot) + pattern.substr(1)
         }
       }
       // Otherwise root using cwd
