@@ -15,8 +15,6 @@ jest.resetModuleRegistry()
 
 const IS_WINDOWS = process.platform === 'win32'
 
-// todo test ensures absolute root
-
 describe('pattern', () => {
   beforeAll(async () => {
     await io.rmRF(getTestTemp())
@@ -55,11 +53,31 @@ describe('pattern', () => {
     await fs.mkdir(rootPath, {recursive: true})
     try {
       process.chdir(rootPath)
-      const pattern = new Pattern('m*')
 
+      // Relative
+      let pattern = new Pattern('m*')
       expect(pattern.searchPath).toBe(rootPath)
       expect(pattern.match(path.join(rootPath, 'match'))).toBeTruthy()
       expect(pattern.match(path.join(rootPath, 'not-match'))).toBeFalsy()
+
+      if (IS_WINDOWS) {
+        const currentDrive = process.cwd().substr(0, 2)
+        expect(currentDrive.match(/^[A-Z]:$/i)).toBeTruthy()
+
+        // Relative current drive letter, e.g. C:m*
+        pattern = new Pattern(`${currentDrive}m*`)
+        expect(pattern.searchPath).toBe(rootPath)
+        expect(pattern.match(path.join(rootPath, 'match'))).toBeTruthy()
+        expect(pattern.match(path.join(rootPath, 'not-match'))).toBeFalsy()
+
+        // Relative current drive, e.g. \path\to\cwd\m*
+        pattern = new Pattern(
+          `${Pattern.globEscape(process.cwd().substr(2))}\\m*`
+        )
+        expect(pattern.searchPath).toBe(rootPath)
+        expect(pattern.match(path.join(rootPath, 'match'))).toBeTruthy()
+        expect(pattern.match(path.join(rootPath, 'not-match'))).toBeFalsy()
+      }
     } finally {
       process.chdir(originalCwd)
     }
@@ -159,6 +177,49 @@ describe('pattern', () => {
     expect(pattern.match(path.join(process.cwd(), '~foo'))).toBe(MatchKind.All)
     expect(pattern.match(path.join(homedir, 'foo'))).toBe(MatchKind.None)
     expect(pattern.match(`${homedir}foo`)).toBe(MatchKind.None)
+  })
+
+  it('replaces leading relative root', () => {
+    if (IS_WINDOWS) {
+      const currentDrive = process.cwd().substr(0, 2)
+      expect(currentDrive.match(/^[A-Z]:$/i)).toBeTruthy()
+      const otherDrive = currentDrive.toUpperCase().startsWith('C')
+        ? 'D:'
+        : 'C:'
+      expect(process.cwd().length).toBeGreaterThan(3) // sanity check not drive root
+
+      // Pattern is 'C:'
+      let pattern = new Pattern(currentDrive)
+      expect(pattern.match(process.cwd())).toBe(MatchKind.All)
+      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBe(
+        MatchKind.None
+      )
+
+      // Pattern is 'C:foo'
+      pattern = new Pattern(`${currentDrive}foo`)
+      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBe(MatchKind.All)
+      expect(pattern.match(path.join(process.cwd(), 'bar'))).toBe(
+        MatchKind.None
+      )
+      expect(pattern.match(`${currentDrive}\\foo`)).toBe(MatchKind.All)
+
+      // Pattern is 'X:'
+      pattern = new Pattern(otherDrive)
+      expect(pattern.match(`${otherDrive}\\`)).toBe(MatchKind.All)
+      expect(pattern.match(`${otherDrive}\\foo`)).toBe(MatchKind.None)
+
+      // Pattern is 'X:foo'
+      pattern = new Pattern(`${otherDrive}foo`)
+      expect(pattern.match(`${otherDrive}\\foo`)).toBe(MatchKind.All)
+      expect(pattern.match(`${otherDrive}\\bar`)).toBe(MatchKind.None)
+
+      // Pattern is '\\path\\to\\cwd'
+      pattern = new Pattern(`${process.cwd().substr(2)}\\foo`)
+      expect(pattern.match(path.join(process.cwd(), 'foo'))).toBe(MatchKind.All)
+      expect(pattern.match(path.join(process.cwd(), 'bar'))).toBe(
+        MatchKind.None
+      )
+    }
   })
 
   it('roots exclude pattern', () => {

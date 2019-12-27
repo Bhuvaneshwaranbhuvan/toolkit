@@ -193,7 +193,7 @@ export class Pattern {
 
     // Must not contain globs in root, e.g. Windows UNC path \\foo\b*r
     assert(
-      !pathHelper.hasAbsoluteRoot(pattern) || literalSegments[0],
+      !pathHelper.hasRoot(pattern) || literalSegments[0],
       `Invalid pattern '${pattern}'. Root segment must not contain globs.`
     )
 
@@ -218,10 +218,28 @@ export class Pattern {
     }
     // Otherwise ensure absolute root
     else if (!pathHelper.hasAbsoluteRoot(pattern)) {
-      pattern = pathHelper.ensureAbsoluteRoot(
-        Pattern.globEscape(process.cwd()),
-        pattern
-      )
+      // Check if has relative root, e.g. C:foo or \foo
+      if (pathHelper.hasRoot(pattern)) {
+        const originalSegments = new Path(pattern)
+        const absoluteRootSegments = new Path(
+          pathHelper.ensureAbsoluteRoot(
+            'C:\\dummy-root',
+            originalSegments.segments[0]
+          )
+        )
+        pattern = new Path(
+          absoluteRootSegments.segments
+            .map(x => Pattern.globEscape(x))
+            .concat(originalSegments.segments.slice(1))
+        ).toString()
+      }
+      // Otherwise root using cwd
+      else {
+        pattern = pathHelper.ensureAbsoluteRoot(
+          Pattern.globEscape(process.cwd()),
+          pattern
+        )
+      }
     }
 
     return pattern

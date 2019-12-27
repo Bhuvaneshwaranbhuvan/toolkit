@@ -105,34 +105,6 @@ export function ensureAbsoluteRoot(root: string, itemPath: string): string {
 }
 
 /**
- * Roots the path if not already rooted
- */
-export function ensureRoot(root: string, itemPath: string): string {
-  assert(root, `ensureRoot parameter 'root' must not be empty`)
-  assert(itemPath, `ensureRoot parameter 'itemPath' must not be empty`)
-
-  // Already rooted
-  if (hasRoot(itemPath)) {
-    return itemPath
-  }
-
-  // On Windows, check for root like C:
-  if (IS_WINDOWS && root.match(/^[A-Z]:$/i)) {
-    return root + itemPath
-  }
-
-  // Otherwise ensure root ends with a separator
-  if (root.endsWith('/') || (IS_WINDOWS && root.endsWith('\\'))) {
-    // Intentionally empty
-  } else {
-    // Append separator
-    root += path.sep
-  }
-
-  return root + itemPath
-}
-
-/**
  * On Linux/macOS, true if path starts with `/`. On Windows, true for paths like:
  * `\\hello\share` and `C:\hello` (and using alternate separator).
  */
