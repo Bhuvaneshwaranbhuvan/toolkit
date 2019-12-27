@@ -65,16 +65,24 @@ export function ensureAbsoluteRoot(root: string, itemPath: string): string {
 
       // Drive letter matches cwd? Expand to cwd
       if (itemPath[0].toUpperCase() === cwd[0].toUpperCase()) {
-        if (!cwd.endsWith('\\')) {
-          cwd += '\\'
+        // Drive only, e.g. C:
+        if (itemPath.length === 2) {
+          // Preserve specified drive letter case (upper or lower)
+          return `${itemPath[0]}:\\${cwd.substr(3)}`
         }
-
-        // Preserve specified drive letter case (upper or lower)
-        return `${itemPath[0]}:\\${cwd.substr(3)}${itemPath.substr(2)}`
+        // Drive + path, e.g. C:foo
+        else {
+          if (!cwd.endsWith('\\')) {
+            cwd += '\\'
+          }
+          // Preserve specified drive letter case (upper or lower)
+          return `${itemPath[0]}:\\${cwd.substr(3)}${itemPath.substr(2)}`
+        }
       }
-
-      // Different drive letter
-      return `${itemPath[0]}:\\${itemPath.substr(2)}`
+      // Different drive
+      else {
+        return `${itemPath[0]}:\\${itemPath.substr(2)}`
+      }
     }
     // Check for itemPath like \ or \foo
     else if (normalizeSeparators(itemPath).match(/^\\$|^\\[^\\]/)) {
