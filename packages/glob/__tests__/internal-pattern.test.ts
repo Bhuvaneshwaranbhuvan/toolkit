@@ -352,7 +352,7 @@ describe('pattern', () => {
     expect(pattern.searchPath).toBe(`${root}foo`)
     if (IS_WINDOWS) {
       pattern = new Pattern('C:/foo/b\\[a]r/b*')
-      expect(pattern.searchPath).toBe(`C:\\foo\\b\\[a]r`)
+      expect(pattern.searchPath).toBe(`C:\\foo\\b\\ar`)
       expect(pattern.match('C:/foo/b/a]r/baz')).toBeTruthy()
       pattern = new Pattern('C:/foo/b[\\!]r/b*')
       expect(pattern.searchPath).toBe('C:\\foo\\b[\\!]r')
