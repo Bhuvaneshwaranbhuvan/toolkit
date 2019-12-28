@@ -203,7 +203,6 @@ export class Pattern {
     // Replace leading `.` segment
     if (pattern === '.' || pattern.startsWith(`.${path.sep}`)) {
       pattern = Pattern.globEscape(process.cwd()) + pattern.substr(1)
-      pattern = pathHelper.normalizeSeparators(pattern)
     }
     // Replace leading `~` segment
     else if (pattern === '~' || pattern.startsWith(`~${path.sep}`)) {
@@ -214,38 +213,38 @@ export class Pattern {
         `Expected HOME directory to be a rooted path. Actual '${homedir}'`
       )
       pattern = Pattern.globEscape(homedir) + pattern.substr(1)
-      pattern = pathHelper.normalizeSeparators(pattern)
+    }
+    // Replace relative drive root, e.g. pattern is C: or C:foo
+    else if (
+      IS_WINDOWS &&
+      (pattern.match(/^[A-Z]:$/i) || pattern.match(/^[A-Z]:[^\\]/i))
+    ) {
+      let root = pathHelper.ensureAbsoluteRoot(
+        'C:\\dummy-root',
+        pattern.substr(0, 2)
+      )
+      if (pattern.length > 2 && !root.endsWith('\\')) {
+        root += '\\'
+      }
+      pattern = Pattern.globEscape(root) + pattern.substr(2)
+    }
+    // Replace relative root, e.g. pattern is \ or \foo
+    else if (IS_WINDOWS && (pattern === '\\' || pattern.match(/^\\[^\\]/))) {
+      let root = pathHelper.ensureAbsoluteRoot('C:\\dummy-root', '\\')
+      if (!root.endsWith('\\')) {
+        root += '\\'
+      }
+      pattern = Pattern.globEscape(root) + pattern.substr(1)
     }
     // Otherwise ensure absolute root
-    else if (!pathHelper.hasAbsoluteRoot(pattern)) {
-      // Check if has relative root, e.g. C:foo or \foo
-      if (pathHelper.hasRoot(pattern)) {
-        const originalRoot = new Path(pattern).segments[0]
-        let absoluteRoot = pathHelper.ensureAbsoluteRoot(
-          'C:\\dummy-root',
-          originalRoot
-        )
-        absoluteRoot = pathHelper.normalizeSeparators(`${absoluteRoot}\\`)
-        if (originalRoot.match(/^[A-Z]:$/i)) {
-          pattern = Pattern.globEscape(absoluteRoot) + pattern.substr(2)
-        } else {
-          assert(
-            originalRoot === '\\',
-            `Unexpected root in pattern '${pattern}'`
-          )
-          pattern = Pattern.globEscape(absoluteRoot) + pattern.substr(1)
-        }
-      }
-      // Otherwise root using cwd
-      else {
-        pattern = pathHelper.ensureAbsoluteRoot(
-          Pattern.globEscape(process.cwd()),
-          pattern
-        )
-      }
+    else {
+      pattern = pathHelper.ensureAbsoluteRoot(
+        Pattern.globEscape(process.cwd()),
+        pattern
+      )
     }
 
-    return pattern
+    return pathHelper.normalizeSeparators(pattern)
   }
 
   /**

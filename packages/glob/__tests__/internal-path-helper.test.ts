@@ -191,7 +191,11 @@ describe('path-helper', () => {
         `${currentDrive}\\hello`
       )
       assertEnsureAbsoluteRoot(`${otherDrive}\\`, '\\', `${currentDrive}\\`)
-      assertEnsureAbsoluteRoot(`${otherDrive}\\`, '\\hello', '\\hello')
+      assertEnsureAbsoluteRoot(
+        `${otherDrive}\\`,
+        '\\hello',
+        `${currentDrive}\\hello`
+      )
 
       // Already rooted - UNC
       assertEnsureAbsoluteRoot('D:\\', '//machine/share', '//machine/share')
